@@ -59,6 +59,27 @@
                 gap: 12px;
                 margin: 8px 0 4px;
             }
+
+            .video-container {
+                position: relative;
+                padding-bottom: 56.25%;
+                height: 0;
+                overflow: hidden;
+                max-width: 100%;
+                background: #0b0d18;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                margin: 16px 0;
+            }
+
+            .video-container iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: var(--radius);
+            }
         </style>
     </head>
 
@@ -220,9 +241,27 @@ params:
                 <ul>
                     <li>Playwright: automation đa trình duyệt, ổn định, auto-wait tốt.</li>
                     <li>MCP: chuẩn nối LLM với công cụ; context engineering = thiết kế ngữ cảnh + tool đúng.</li>
-                    <li>Playwright MCP: agent vừa “nhìn/hiểu” (accessibility tree) vừa “hành động” (click/điền form) →
+                    <li>Playwright MCP: agent vừa "nhìn/hiểu" (accessibility tree) vừa "hành động" (click/điền form) →
                         hữu ích cho test tự động, RPA thông minh, kiểm tra accessibility.</li>
                 </ul>
+
+                <h2>Video tham khảo</h2>
+                <h3>Playwright - Giới thiệu và demo</h3>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/kPDYwQtV2vE" title="Playwright Introduction"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+
+                <h3>MCP và AI Agents trong thực tế</h3>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/reYGoa_-RnE" title="MCP and AI Agents" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
             </article>
         </div>
     </body>
