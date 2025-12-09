@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Playwright MCP: agent + web | Luong Hoang Viet</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap"
+            rel="stylesheet" />
+        <link rel="stylesheet" href="../assets/css/style.css" />
+        <style>
+            .post {
+                max-width: 820px;
+                margin: 32px auto 80px;
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 28px 26px;
+                box-shadow: var(--shadow);
+                line-height: 1.7;
+            }
+
+            .post h1 {
+                margin-top: 0;
+                font-size: clamp(28px, 4vw, 34px);
+            }
+
+            .post h2 {
+                margin-top: 28px;
+            }
+
+            .post code {
+                background: rgba(255, 255, 255, 0.06);
+                padding: 2px 6px;
+                border-radius: 6px;
+            }
+
+            .post pre {
+                background: rgba(255, 255, 255, 0.06);
+                padding: 14px;
+                border-radius: 12px;
+                overflow-x: auto;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="page-shell">
+            <header class="site-header">
+                <div class="brand">
+                    <div class="avatar">VH</div>
+                    <div>
+                        <div class="brand-title">Luong Hoang Viet</div>
+                        <div class="brand-sub">Tech notes</div>
+                    </div>
+                </div>
+                <nav class="nav">
+                    <a href="../index.html">Trang chủ</a>
+                    <a href="index.html">Tất cả bài</a>
+                </nav>
+            </header>
+
+            <article class="post">
+                <p class="eyebrow">Tech note</p>
+                <h1>Playwright MCP: tự động hóa web kết hợp AI agent</h1>
+
+                <h2>Playwright là gì?</h2>
+                <p>Playwright là thư viện automation từ Microsoft giúp điều khiển browser (Chromium, Firefox, WebKit)
+                    theo cách đáng tin cậy và song song. Nó hỗ trợ context độc lập, isolation cookie/storage, network
+                    interception, tracing, headless/headful, và API đồng nhất đa trình duyệt.</p>
+
+                <h3>Ưu điểm so với WebdriverIO</h3>
+                <ul>
+                    <li><strong>Kiến trúc hiện đại</strong>: DevTools protocol trực tiếp, không cần Selenium Grid; khởi
+                        động nhanh, ít flake.</li>
+                    <li><strong>Đa trình duyệt gốc</strong>: Chromium/Firefox/WebKit đồng bộ phiên bản, giảm lệch API.
+                    </li>
+                    <li><strong>Isolation mạnh</strong>: Browser context tạo nhanh, phù hợp test song song;
+                        runner/fixtures tích hợp.</li>
+                    <li><strong>Auto-wait</strong>: Chờ element ổn định trước khi tương tác, giảm sleep thủ công.</li>
+                    <li><strong>Network & storage control</strong>: Mock response, ghi/đọc storage state, warm start
+                        phiên đăng nhập.</li>
+                </ul>
+
+                <h2>MCP và context engineering</h2>
+                <ul>
+                    <li><strong>MCP</strong>: Giao thức chuẩn để agent/LLM truy cập công cụ ngoài qua schema thống nhất.
+                        Tách “não LLM” và “tay chân công cụ”.</li>
+                    <li><strong>Context engineering</strong>: Thiết kế ngữ cảnh (system prompt, tool schema, memory) để
+                        LLM hành động đúng nhiệm vụ và an toàn.</li>
+                    <li><strong>Bridge AI agent ↔ LLM ↔ Playwright</strong>: LLM gọi tool MCP; server thực thi
+                        Playwright (mở trang, click, điền form, đọc DOM) và trả kết quả/ảnh/accessibility tree cho LLM.
+                    </li>
+                </ul>
+
+                <h2>Playwright MCP</h2>
+                <h3>Accessibility tree là gì?</h3>
+                <p>Cây trợ năng mô tả UI theo role/name/state từ DOM + ARIA. Playwright MCP có thể xuất cây này để LLM
+                    hiểu ngữ nghĩa (nút, nhãn, trạng thái).</p>
+
+                <h3>Ứng dụng</h3>
+                <ul>
+                    <li>Tự động hóa có hiểu ngữ cảnh: chọn đúng nút qua accessibility role/name.</li>
+                    <li>Test end-to-end sinh mã tự động: LLM sinh step, chạy qua MCP, tự sửa nếu fail.</li>
+                    <li>Kiểm tra accessibility: phát hiện thiếu label/ARIA, flow bàn phím.</li>
+                    <li>Data collection có kiểm soát: crawl trả về dữ liệu cấu trúc cho LLM.</li>
+                </ul>
+
+                <h2>Ví dụ nhanh</h2>
+                <h3>Playwright (thuần)</h3>
+                <pre><code class="language-js">import { chromium } from 'playwright';
+
+(async () =&gt; {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto('https://example.com');
+  await page.getByRole('link', { name: 'More information' }).click();
+  console.log(await page.title());
+  await browser.close();
+})();
+</code></pre>
+
+                <h3>Playwright MCP (mẫu ý tưởng)</h3>
+                <p>Giả sử MCP server expose tool <code>playwright.browse</code>:</p>
+                <pre><code class="language-yaml">name: playwright.browse
+params:
+  url: string
+  actions: array
+  returnAccessibilityTree: boolean
+</code></pre>
+                <p>LLM gọi tool:</p>
+                <pre><code class="language-json">{
+  "tool": "playwright.browse",
+  "params": {
+    "url": "https://example.com",
+    "actions": [
+      { "type": "click", "selector": "role=link[name='More information']" }
+    ],
+    "returnAccessibilityTree": true
+  }
+}
+</code></pre>
+                <p>Server chạy Playwright, trả về: ảnh/chụp HTML sau click, accessibility tree, trạng thái và log để LLM
+                    tự sửa bước.</p>
+
+                <h2>Tóm tắt</h2>
+                <ul>
+                    <li>Playwright: automation đa trình duyệt, ổn định, auto-wait tốt.</li>
+                    <li>MCP: chuẩn nối LLM với công cụ; context engineering = thiết kế ngữ cảnh + tool đúng.</li>
+                    <li>Playwright MCP: agent vừa “nhìn/hiểu” (accessibility tree) vừa “hành động” (click/điền form) →
+                        hữu ích cho test tự động, RPA thông minh, kiểm tra accessibility.</li>
+                </ul>
+            </article>
+        </div>
+    </body>
+
+</html>
